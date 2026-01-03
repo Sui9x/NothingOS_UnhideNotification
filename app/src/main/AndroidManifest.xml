@@ -1,0 +1,22 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.sui.nothingunhidenotif">
+    <application
+        android:label="NothingUnhideNotif"
+        android:hasCode="true">
+        <meta-data
+            android:name="xposedmodule"
+            android:value="true" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="disable the hiding of notification content by NothingOS AppLocker" />
+        <meta-data
+            android:name="xposedminversion"
+            android:value="82" />
+        <meta-data
+            android:name="xposedscope"
+            android:resource="@array/example_scope" />
+        <meta-data
+            android:name="lsposedmodule"
+            android:value="true" />
+    </application>
+</manifest>

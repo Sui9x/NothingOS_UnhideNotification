@@ -1,0 +1,67 @@
+package com.sui.nothingunhidenotif
+
+import de.robv.android.xposed.IXposedHookLoadPackage
+import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XposedBridge
+import de.robv.android.xposed.XposedHelpers
+import de.robv.android.xposed.callbacks.XC_LoadPackage
+
+class Hook : IXposedHookLoadPackage {
+
+    private fun log(msg: String) = XposedBridge.log("NothingUnhideNotif: $msg")
+
+    override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
+        if (lpparam.packageName != "com.android.systemui") return
+        log("handleLoadPackage: ${lpparam.packageName}")
+
+        val cl = lpparam.classLoader
+
+        fun hookAll(className: String, methodName: String, hook: XC_MethodHook) {
+            try {
+                val c = XposedHelpers.findClass(className, cl)
+                XposedBridge.hookAllMethods(c, methodName, hook)
+                log("HOOKED(all): $className->$methodName")
+            } catch (t: Throwable) {
+                log("FAILED: $className->$methodName : ${t.javaClass.simpleName}: ${t.message}")
+            }
+        }
+
+        // Hook: com.android.systemui.statusbar.notification.row.ExpandableNotificationRow.isAppLocked()
+        // isAppLockedメソッドをフックしAppLockerによる通知内容非表示を無効化しますが、ロック画面ではsetSensitiveメソッドによって通知内容が非表示になります。
+        // Hook the isAppLocked method to disable the hiding of notification content by AppLocker, but on the lock screen, the notification content is hidden by the setSensitive method.
+        hookAll(
+            "com.android.systemui.statusbar.notification.row.ExpandableNotificationRow",
+            "isAppLocked",
+            object : XC_MethodHook() {
+                override fun beforeHookedMethod(param: MethodHookParam) {
+                    param.result = false
+                    //log("CALLED: ExpandableNotificationRow->isAppLocked : forced FALSE")
+                }
+            }
+        )
+
+        // Hook: com.android.systemui.statusbar.notification.collection.NotificationEntry.setSensitive()
+        // setSensitiveメソッドをフックしロック画面での通知内容非表示も無効化しますが、これによりデバイスのアプリ通知設定に従った通知内容非表示も無効になります。
+        // Hook the setSensitive method to disables the hiding of notification content also on the lock screen, but this also disables hiding notification content according to the device's app notification settings.
+        // ロック画面に通知内容を表示する必要がない場合はこのフックを削除してください。
+        // If don't need to display notification content on the lock screen, remove this hook.
+        hookAll(
+            "com.android.systemui.statusbar.notification.collection.NotificationEntry",
+            "setSensitive",
+            object : XC_MethodHook() {
+                override fun beforeHookedMethod(param: MethodHookParam) {
+                    // (boolean, boolean)
+                    try {
+                        if (param.args.size >= 2) {
+                            param.args[0] = false
+                            param.args[1] = false
+                        } else if (param.args.isNotEmpty()) {
+                            param.args[0] = false
+                        }
+                    } catch (_: Throwable) {}
+                    //log("CALLED: NotificationEntry->setSensitive(..) : forced FALSE")
+                }
+            }
+        )
+    }
+}
