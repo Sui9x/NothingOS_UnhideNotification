@@ -1,8 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.sui.nothingunhidenotif">
     <application
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         android:label="NothingUnhideNotif"
         android:hasCode="true">
+        <activity
+            android:name="com.sui.nothingunhidenotif.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <meta-data
             android:name="xposedmodule"
             android:value="true" />
@@ -11,7 +20,8 @@
             android:value="disable the hiding of notification content by NothingOS AppLocker" />
         <meta-data
             android:name="xposedminversion"
-            android:value="82" />
+            android:value="93" />
+        <meta-data android:name="xposedsharedprefs" android:value="true" />
         <meta-data
             android:name="xposedscope"
             android:resource="@array/example_scope" />
